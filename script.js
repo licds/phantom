@@ -1,267 +1,130 @@
-const canvas = document.getElementById("sketch-canvas");
-const ctx = canvas.getContext("2d");
-const colorPicker = document.getElementById("color-picker");
-const brushSize = document.getElementById("brush-size");
-const clearButton = document.getElementById("clear-canvas");
-let isDrawing = false;
-let isFilling = false;
-let fillColor = "#000000"; // Default fill color
+const canvas = document.querySelector("canvas"),
+toolBtns = document.querySelectorAll(".tool"),
+fillColor = document.querySelector("#fill-color"),
+sizeSlider = document.querySelector("#size-slider"),
+colorBtns = document.querySelectorAll(".colors .option"),
+colorPicker = document.querySelector("#color-picker"),
+clearCanvas = document.querySelector(".clear-canvas"),
+saveImg = document.querySelector(".save-img"),
+ctx = canvas.getContext("2d");
 
-canvas.addEventListener("mousedown", () => {
+// global variables with default value
+let prevMouseX, prevMouseY, snapshot,
+isDrawing = false,
+selectedTool = "brush",
+brushWidth = 5,
+selectedColor = "#000";
+
+const setCanvasBackground = () => {
+    // setting whole canvas background to white, so the downloaded img background will be white
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = selectedColor; // setting fillstyle back to the selectedColor, it'll be the brush color
+}
+
+window.addEventListener("load", () => {
+    // setting canvas width/height.. offsetwidth/height returns viewable width/height of an element
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    setCanvasBackground();
+});
+
+const drawRect = (e) => {
+    // if fillColor isn't checked draw a rect with border else draw rect with background
+    if(!fillColor.checked) {
+        // creating circle according to the mouse pointer
+        return ctx.strokeRect(e.offsetX, e.offsetY, prevMouseX - e.offsetX, prevMouseY - e.offsetY);
+    }
+    ctx.fillRect(e.offsetX, e.offsetY, prevMouseX - e.offsetX, prevMouseY - e.offsetY);
+}
+
+const drawCircle = (e) => {
+    ctx.beginPath(); // creating new path to draw circle
+    // getting radius for circle according to the mouse pointer
+    let radius = Math.sqrt(Math.pow((prevMouseX - e.offsetX), 2) + Math.pow((prevMouseY - e.offsetY), 2));
+    ctx.arc(prevMouseX, prevMouseY, radius, 0, 2 * Math.PI); // creating circle according to the mouse pointer
+    fillColor.checked ? ctx.fill() : ctx.stroke(); // if fillColor is checked fill circle else draw border circle
+}
+
+const drawTriangle = (e) => {
+    ctx.beginPath(); // creating new path to draw circle
+    ctx.moveTo(prevMouseX, prevMouseY); // moving triangle to the mouse pointer
+    ctx.lineTo(e.offsetX, e.offsetY); // creating first line according to the mouse pointer
+    ctx.lineTo(prevMouseX * 2 - e.offsetX, e.offsetY); // creating bottom line of triangle
+    ctx.closePath(); // closing path of a triangle so the third line draw automatically
+    fillColor.checked ? ctx.fill() : ctx.stroke(); // if fillColor is checked fill triangle else draw border
+}
+
+const startDraw = (e) => {
     isDrawing = true;
-    isFilling = false; // Ensure filling is off while drawing
-    ctx.strokeStyle = colorPicker.value;
-    ctx.lineWidth = brushSize.value;
-});
-
-canvas.addEventListener("mousemove", (e) => {
-    if (isDrawing) {
-        ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
-        ctx.stroke();
-    }
-});
-
-canvas.addEventListener("mouseup", () => {
-    isDrawing = false;
-    ctx.closePath();
-});
-
-// Enable fill functionality when the canvas is clicked
-canvas.addEventListener("click", (e) => {
-    isFilling = true;
-    fillColor = colorPicker.value;
-    fill(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
-});
-
-colorPicker.addEventListener("input", () => {
-    ctx.strokeStyle = colorPicker.value;
-    if (!isFilling) {
-        fillColor = colorPicker.value; // Update fill color when drawing
-    }
-});
-
-clearButton.addEventListener("click", () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-});
-
-// Fill function
-function fill(x, y) {
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const pixelStack = [{ x, y }];
-    const targetColor = getPixelColor(x, y);
-
-    if (targetColor === fillColor) {
-        return; // If the selected area already has the target color, no need to fill.
-    }
-
-    while (pixelStack.length) {
-        const currentPosition = pixelStack.pop();
-        const { x, y } = currentPosition;
-
-        if (x >= 0 && x < canvas.width && y >= 0 && y < canvas.height) {
-            const currentColor = getPixelColor(x, y);
-
-            if (currentColor === targetColor) {
-                setPixelColor(x, y, fillColor);
-                pixelStack.push({ x: x - 1, y });
-                pixelStack.push({ x: x + 1, y });
-                pixelStack.push({ x, y: y - 1 });
-                pixelStack.push({ x, y: y + 1 });
-            }
-        }
-    }
-
-    ctx.putImageData(imageData, 0, 0);
+    prevMouseX = e.offsetX; // passing current mouseX position as prevMouseX value
+    prevMouseY = e.offsetY; // passing current mouseY position as prevMouseY value
+    ctx.beginPath(); // creating new path to draw
+    ctx.lineWidth = brushWidth; // passing brushSize as line width
+    ctx.strokeStyle = selectedColor; // passing selectedColor as stroke style
+    ctx.fillStyle = selectedColor; // passing selectedColor as fill style
+    // copying canvas data & passing as snapshot value.. this avoids dragging the image
+    snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
 }
 
-function getPixelColor(x, y) {
-    const pixelIndex = (y * canvas.width + x) * 4;
-    const r = imageData.data[pixelIndex];
-    const g = imageData.data[pixelIndex + 1];
-    const b = imageData.data[pixelIndex + 2];
-    return `rgb(${r},${g},${b})`;
+const drawing = (e) => {
+    if(!isDrawing) return; // if isDrawing is false return from here
+    ctx.putImageData(snapshot, 0, 0); // adding copied canvas data on to this canvas
+
+    if(selectedTool === "brush" || selectedTool === "eraser") {
+        // if selected tool is eraser then set strokeStyle to white 
+        // to paint white color on to the existing canvas content else set the stroke color to selected color
+        ctx.strokeStyle = selectedTool === "eraser" ? "#fff" : selectedColor;
+        ctx.lineTo(e.offsetX, e.offsetY); // creating line according to the mouse pointer
+        ctx.stroke(); // drawing/filling line with color
+    } else if(selectedTool === "rectangle"){
+        drawRect(e);
+    } else if(selectedTool === "circle"){
+        drawCircle(e);
+    } else {
+        drawTriangle(e);
+    }
 }
 
-function setPixelColor(x, y, color) {
-    const pixelIndex = (y * canvas.width + x) * 4;
-    const [r, g, b] = color.match(/\d+/g);
-    imageData.data[pixelIndex] = r;
-    imageData.data[pixelIndex + 1] = g;
-    imageData.data[pixelIndex + 2] = b;
-}
-
-let selectedFillColor = "#ff0000"; // Default fill color
-
-// Add event listeners to the radio buttons for fill color selection
-const fillColorRadioButtons = document.querySelectorAll('input[name="fill-color"]');
-fillColorRadioButtons.forEach((radio) => {
-    radio.addEventListener("change", () => {
-        selectedFillColor = radio.value;
+toolBtns.forEach(btn => {
+    btn.addEventListener("click", () => { // adding click event to all tool option
+        // removing active class from the previous option and adding on current clicked option
+        document.querySelector(".options .active").classList.remove("active");
+        btn.classList.add("active");
+        selectedTool = btn.id;
     });
 });
 
-// Add the fill bucket tool (using only solid fill)
-canvas.addEventListener("click", (e) => {
-    fillSolid(selectedFillColor, e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
-});
+sizeSlider.addEventListener("change", () => brushWidth = sizeSlider.value); // passing slider value as brushSize
 
-// Define the fillSolid function
-function fillSolid(targetColor, startX, startY) {
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const pixelStack = [{ x: startX, y: startY }];
-
-    const targetColorRGBA = hexToRGBA(targetColor);
-    const startIndex = (startY * canvas.width + startX) * 4;
-
-    const startColor = {
-        r: imageData.data[startIndex],
-        g: imageData.data[startIndex + 1],
-        b: imageData.data[startIndex + 2],
-        a: imageData.data[startIndex + 3],
-    };
-
-    if (colorMatch(startColor, targetColorRGBA)) {
-        return; // If the start color already matches the target color, no need to fill.
-    }
-
-    while (pixelStack.length) {
-        const currentPosition = pixelStack.pop();
-        const { x, y } = currentPosition;
-
-        const currentPosIndex = (y * canvas.width + x) * 4;
-        while (y >= 0 && colorMatch(startColor, targetColorRGBA, currentPosIndex)) {
-            y--;
-            currentPosIndex -= canvas.width * 4;
-        }
-
-        currentPosIndex += canvas.width * 4;
-        y++;
-        let reachLeft = false;
-        let reachRight = false;
-
-        while (y < canvas.height - 1 && colorMatch(startColor, targetColorRGBA, currentPosIndex)) {
-            y++;
-
-            fillPixel(currentPosIndex);
-
-            if (x > 0) {
-                if (colorMatch(startColor, targetColorRGBA, currentPosIndex - 4)) {
-                    if (!reachLeft) {
-                        pixelStack.push({ x: x - 1, y });
-                        reachLeft = true;
-                    }
-                } else if (reachLeft) {
-                    reachLeft = false;
-                }
-            }
-
-            if (x < canvas.width - 1) {
-                if (colorMatch(startColor, targetColorRGBA, currentPosIndex + 4)) {
-                    if (!reachRight) {
-                        pixelStack.push({ x: x + 1, y });
-                        reachRight = true;
-                    }
-                } else if (reachRight) {
-                    reachRight = false;
-                }
-            }
-
-            currentPosIndex += canvas.width * 4;
-        }
-    }
-
-    ctx.putImageData(imageData, 0, 0);
-
-    function fillPixel(index) {
-        imageData.data[index] = targetColorRGBA.r;
-        imageData.data[index + 1] = targetColorRGBA.g;
-        imageData.data[index + 2] = targetColorRGBA.b;
-        imageData.data[index + 3] = targetColorRGBA.a;
-    }
-
-    function colorMatch(color1, color2, index) {
-        index = index || 0;
-        const r1 = imageData.data[index];
-        const g1 = imageData.data[index + 1];
-        const b1 = imageData.data[index + 2];
-        const a1 = imageData.data[index + 3];
-
-        return (
-            r1 === color1.r &&
-            g1 === color1.g &&
-            b1 === color1.b &&
-            a1 === color1.a
-        );
-    }
-
-    function hexToRGBA(hex) {
-        hex = hex.replace(/^#/, '');
-        const bigint = parseInt(hex, 16);
-        return {
-            r: (bigint >> 16) & 255,
-            g: (bigint >> 8) & 255,
-            b: bigint & 255,
-            a: 255,
-        };
-    }
-}
-
-// Add size buttons and their event listeners
-const sizeButtons = document.querySelectorAll(".size-buttons button");
-sizeButtons.forEach(button => {
-    button.addEventListener("click", () => {
-        sizeButtons.forEach(btn => btn.classList.remove("active"));
-        button.classList.add("active");
-        setCanvasSize(button.id);
+colorBtns.forEach(btn => {
+    btn.addEventListener("click", () => { // adding click event to all color button
+        // removing selected class from the previous option and adding on current clicked option
+        document.querySelector(".options .selected").classList.remove("selected");
+        btn.classList.add("selected");
+        // passing selected btn background color as selectedColor value
+        selectedColor = window.getComputedStyle(btn).getPropertyValue("background-color");
     });
 });
 
-function setCanvasSize(size) {
-    switch (size) {
-        case "size-small":
-            canvas.width = 200;
-            canvas.height = 400;
-            break;
-        case "size-medium":
-            canvas.width = 300;
-            canvas.height = 400;
-            break;
-        case "size-large":
-            canvas.width = 500;
-            canvas.height = 500;
-            break;
-        default:
-            break;
-    }
-}
-
-canvas.addEventListener("mousedown", (e) => {
-    isDrawing = true;
-    ctx.strokeStyle = colorPicker.value;
-    ctx.lineWidth = brushSize.value;
-    ctx.beginPath();
-    ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
+colorPicker.addEventListener("change", () => {
+    // passing picked color value from color picker to last color btn background
+    colorPicker.parentElement.style.background = colorPicker.value;
+    colorPicker.parentElement.click();
 });
 
-canvas.addEventListener("mousemove", (e) => {
-    if (!isDrawing) return;
-    ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
-    ctx.stroke();
+clearCanvas.addEventListener("click", () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // clearing whole canvas
+    setCanvasBackground();
 });
 
-canvas.addEventListener("mouseup", () => {
-    isDrawing = false;
-    ctx.closePath();
+saveImg.addEventListener("click", () => {
+    const link = document.createElement("a"); // creating <a> element
+    link.download = `${Date.now()}.jpg`; // passing current date as link download value
+    link.href = canvas.toDataURL(); // passing canvasData as link href value
+    link.click(); // clicking link to download image
 });
 
-colorPicker.addEventListener("input", () => {
-    ctx.strokeStyle = colorPicker.value;
-});
-
-brushSize.addEventListener("input", () => {
-    ctx.lineWidth = brushSize.value;
-});
-
-clearButton.addEventListener("click", () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-});
+canvas.addEventListener("mousedown", startDraw);
+canvas.addEventListener("mousemove", drawing);
+canvas.addEventListener("mouseup", () => isDrawing = false);
