@@ -1,5 +1,48 @@
 <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="styles.css">
+        <title>Sketch Canvas</title>
+    </head>
     <body>
-        <h1>Hello, world!</h1>
+        <h1>Draw your first phantom!</h1>
+        <div class="size-buttons">
+            <button id="size-small">Small</button>
+            <button id="size-medium">Medium</button>
+            <button id="size-large">Large</button>
+        </div>
+        <div class="sketch-container">
+            <canvas id="sketch-canvas" width="800" height="600"></canvas>
+            <div class="controls">
+                <input type="color" id="color-picker" value="#000000">
+                <input type="range" id="brush-size" min="1" max="20" value="5">
+                <button id="clear-canvas">Clear</button>
+            </div>
+            <div class="fill-options">
+                <label>
+                    <input type="radio" name="fill-color" value="#ff0000" checked>
+                    Red
+                </label>
+                <label>
+                    <input type="radio" name="fill-color" value="#00ff00">
+                    Green
+                </label>
+                <label>
+                    <input type="radio" name="fill-color" value="#0000ff">
+                    Blue
+                </label>
+                <label>
+                    <input type="radio" name="fill-color" value="#ffff00">
+                    Yellow
+                </label>
+                <label>
+                    <input type="radio" name="fill-color" value="#ff00ff">
+                    Magenta
+                </label>
+            </div>
+            
+        </div>
+        <script src="script.js"></script>
     </body>
 </html>
