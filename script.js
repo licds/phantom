@@ -13,7 +13,10 @@ let prevMouseX, prevMouseY, snapshot,
 isDrawing = false,
 selectedTool = "brush",
 brushWidth = 5,
-selectedColor = "#000";
+selectedColor = "#000",
+selectedColour = "#00FF00",
+maskInfo = null,
+fillspeed = 'slow';
 
 const setCanvasBackground = () => {
     // setting whole canvas background to white, so the downloaded img background will be white
@@ -30,29 +33,13 @@ window.addEventListener("load", () => {
 });
 
 const drawRect = (e) => {
-    // if fillColor isn't checked draw a rect with border else draw rect with background
-    if(!fillColor.checked) {
-        // creating circle according to the mouse pointer
-        return ctx.strokeRect(e.offsetX, e.offsetY, prevMouseX - e.offsetX, prevMouseY - e.offsetY);
-    }
-    ctx.fillRect(e.offsetX, e.offsetY, prevMouseX - e.offsetX, prevMouseY - e.offsetY);
-}
-
-const drawCircle = (e) => {
-    ctx.beginPath(); // creating new path to draw circle
-    // getting radius for circle according to the mouse pointer
-    let radius = Math.sqrt(Math.pow((prevMouseX - e.offsetX), 2) + Math.pow((prevMouseY - e.offsetY), 2));
-    ctx.arc(prevMouseX, prevMouseY, radius, 0, 2 * Math.PI); // creating circle according to the mouse pointer
-    fillColor.checked ? ctx.fill() : ctx.stroke(); // if fillColor is checked fill circle else draw border circle
-}
-
-const drawTriangle = (e) => {
-    ctx.beginPath(); // creating new path to draw circle
-    ctx.moveTo(prevMouseX, prevMouseY); // moving triangle to the mouse pointer
-    ctx.lineTo(e.offsetX, e.offsetY); // creating first line according to the mouse pointer
-    ctx.lineTo(prevMouseX * 2 - e.offsetX, e.offsetY); // creating bottom line of triangle
-    ctx.closePath(); // closing path of a triangle so the third line draw automatically
-    fillColor.checked ? ctx.fill() : ctx.stroke(); // if fillColor is checked fill triangle else draw border
+    addFormListener();
+    canvas.addEventListener("click", (evt) => {
+        const { x, y } = getEventCoords(evt, canvas.getBoundingClientRect());
+    
+        console.log("User clicked the point x", x, "y", y);
+        fillColour(x, y, canvas, ctx, selectedColour);
+    });
 }
 
 const startDraw = (e) => {
@@ -79,10 +66,6 @@ const drawing = (e) => {
         ctx.stroke(); // drawing/filling line with color
     } else if(selectedTool === "rectangle"){
         drawRect(e);
-    } else if(selectedTool === "circle"){
-        drawCircle(e);
-    } else {
-        drawTriangle(e);
     }
 }
 
@@ -128,3 +111,76 @@ saveImg.addEventListener("click", () => {
 canvas.addEventListener("mousedown", startDraw);
 canvas.addEventListener("mousemove", drawing);
 canvas.addEventListener("mouseup", () => isDrawing = false);
+
+function fillColour(x, y, canvas, ctx, fillColor) {
+    const canvasData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    // const targetColor = localColor(x, y);
+
+    function getColorIndex(x, y) {
+        return (y * canvas.width + x) * 4;
+    }
+    function localColor(x, y) {
+        const index = getColorIndex(x, y);
+        const r = canvasData.data[index];
+        const g = canvasData.data[index + 1];
+        const b = canvasData.data[index + 2];
+        console.log("localColor", `rgb(${r},${g},${b})`);
+        return `rgb(${r},${g},${b})`;
+    }
+    function isSameColor(x, y) {
+        return localColor(x, y) === targetColor;
+    }
+    function fillColorAt(x, y) {
+        const index = getColorIndex(x, y);
+        canvasData.data[index] = fillColor[0];
+        canvasData.data[index + 1] = fillColor[1];
+        canvasData.data[index + 2] = fillColor[2];
+        canvasData.data[index + 3] = 255; // Set the alpha channel to fully opaque
+    }
+    function floodFillRecursive(x, y) {
+        if (x < 0 || x >= width || y < 0 || y >= height) {
+            console.log("x", x, "y", y);
+          return;
+        }
+        if (!isSameColor(x, y)) {
+            console.log("isSameColor", isSameColor(x, y));
+          return;
+        }
+        // if (localColor(x, y) === fillColor) {
+        //     console.log("localColor", localColor(x, y));
+        //     return;
+        // }
+    
+        fillColorAt(x, y);
+    
+        floodFillRecursive(x + 1, y);
+        floodFillRecursive(x - 1, y);
+        floodFillRecursive(x, y + 1);
+        floodFillRecursive(x, y - 1);
+    }
+    const targetColor = `rgb(${canvasData.data[getColorIndex(x, y)]}, ${canvasData.data[getColorIndex(x, y) + 1]}, ${canvasData.data[getColorIndex(x, y) + 2]})`;
+    // fillColor = fillColor.match(/\d+/g).map(Number); // Parse the color string to [r, g, b]
+
+    if (isSameColor(x, y, targetColor)) {
+        floodFillRecursive(x, y, targetColor);
+        ctx.putImageData(canvasData, 0, 0);
+      }
+}
+
+function addFormListener() {
+    document.getElementById("colorForm").addEventListener("change", (evt) => {
+      selectedColour = evt.target.value;
+    });
+}
+
+function getEventCoords(evt, nodeRect) {
+    let x, y;
+    if (evt.touches && evt.touches.length > 0) {
+      x = evt.touches[0].clientX;
+      y = evt.touches[0].clientY;
+    } else {
+      x = evt.clientX;
+      y = evt.clientY;
+    }
+    return { x: Math.round(x - nodeRect.x), y: Math.round(y - nodeRect.y) };
+  }
