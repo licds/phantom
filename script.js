@@ -1,3 +1,5 @@
+import { FloodFill } from 'q-floodfill';
+
 const canvas = document.querySelector("canvas"),
 toolBtns = document.querySelectorAll(".tool"),
 fillColor = document.querySelector("#fill-color"),
@@ -36,9 +38,12 @@ const drawRect = (e) => {
     addFormListener();
     canvas.addEventListener("click", (evt) => {
         const { x, y } = getEventCoords(evt, canvas.getBoundingClientRect());
-    
         console.log("User clicked the point x", x, "y", y);
-        fillColour(x, y, canvas, ctx, selectedColour);
+        // fillColour(x, y, canvas, ctx, selectedColour);
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const floodFill = new FloodFill(imgData);
+        floodFill.fill(selectedColour, x, y, 0);
+        ctx.putImageData(floodFill.imageData, 0, 0)
     });
 }
 
@@ -113,16 +118,16 @@ canvas.addEventListener("mousemove", drawing);
 canvas.addEventListener("mouseup", () => isDrawing = false);
 
 function fillColour(x, y, canvas, ctx, fillColor) {
-    const canvasData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const targetColor = localColor(x, y);
     const width = canvas.width;
     const height = canvas.height;
+    const canvasData = ctx.getImageData(0, 0, width, height);
+    const originalColor = localColor(x, y);
     fillColor = hexToRgb(fillColor)
 
     function getColorIndex(x, y) {
-        return (y * canvas.width + x) * 4;
+        return (y * width + x) * 4;
     }
-    function localColor(x, y) {
+    function localColor(index) {
         const index = getColorIndex(x, y);
         const r = canvasData.data[index];
         const g = canvasData.data[index + 1];
@@ -130,43 +135,31 @@ function fillColour(x, y, canvas, ctx, fillColor) {
         console.log("localColor", `rgb(${r},${g},${b})`);
         return `rgb(${r},${g},${b})`;
     }
-    function isSameColor(x, y) {
-        return localColor(x, y) === targetColor;
-    }
     function fillColorAt(x, y) {
         console.log("fillcolor", fillColor);
         const index = getColorIndex(x, y);
         canvasData.data[index] = fillColor[0];
         canvasData.data[index + 1] = fillColor[1];
         canvasData.data[index + 2] = fillColor[2];
-        canvasData.data[index + 3] = 255; // Set the alpha channel to fully opaque
+        // canvasData.data[index + 3] = 255; // Set the alpha channel to fully opaque
     }
     function hexToRgb(hex) {
-        // Remove the hash (#) character if it exists
         hex = hex.replace(/^#/, '');
-    
-        // Parse the hexadecimal color string into individual RGB components
         const bigint = parseInt(hex, 16);
         const r = (bigint >> 16) & 255;
         const g = (bigint >> 8) & 255;
         const b = bigint & 255;
-    
-        // Return the RGB values as an object
         return { r, g, b };
     }
     function floodFillRecursive(x, y) {
         if (x < 0 || x >= width || y < 0 || y >= height) {
             console.log("x", x, "y", y);
-          return;
+            return;
         }
-        if (!isSameColor(x, y)) {
-            console.log("isSameColor", isSameColor(x, y));
-          return;
+        if (localColor(x, y) !== originalColor) {
+            console.log("localColor != originalColor", localColor(x, y));
+            return;
         }
-        // if (localColor(x, y) === fillColor) {
-        //     console.log("localColor", localColor(x, y));
-        //     return;
-        // }
     
         fillColorAt(x, y);
     
@@ -177,7 +170,7 @@ function fillColour(x, y, canvas, ctx, fillColor) {
     }
     
 
-    if (isSameColor(x, y)) {
+    if (localColor(x, y) !== fillColor) {
         floodFillRecursive(x, y);
         ctx.putImageData(canvasData, 0, 0);
     }
