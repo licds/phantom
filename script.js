@@ -114,7 +114,10 @@ canvas.addEventListener("mouseup", () => isDrawing = false);
 
 function fillColour(x, y, canvas, ctx, fillColor) {
     const canvasData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    // const targetColor = localColor(x, y);
+    const targetColor = localColor(x, y);
+    const width = canvas.width;
+    const height = canvas.height;
+    fillColor = hexToRgb(fillColor)
 
     function getColorIndex(x, y) {
         return (y * canvas.width + x) * 4;
@@ -131,11 +134,25 @@ function fillColour(x, y, canvas, ctx, fillColor) {
         return localColor(x, y) === targetColor;
     }
     function fillColorAt(x, y) {
+        console.log("fillcolor", fillColor);
         const index = getColorIndex(x, y);
         canvasData.data[index] = fillColor[0];
         canvasData.data[index + 1] = fillColor[1];
         canvasData.data[index + 2] = fillColor[2];
         canvasData.data[index + 3] = 255; // Set the alpha channel to fully opaque
+    }
+    function hexToRgb(hex) {
+        // Remove the hash (#) character if it exists
+        hex = hex.replace(/^#/, '');
+    
+        // Parse the hexadecimal color string into individual RGB components
+        const bigint = parseInt(hex, 16);
+        const r = (bigint >> 16) & 255;
+        const g = (bigint >> 8) & 255;
+        const b = bigint & 255;
+    
+        // Return the RGB values as an object
+        return { r, g, b };
     }
     function floodFillRecursive(x, y) {
         if (x < 0 || x >= width || y < 0 || y >= height) {
@@ -158,13 +175,12 @@ function fillColour(x, y, canvas, ctx, fillColor) {
         floodFillRecursive(x, y + 1);
         floodFillRecursive(x, y - 1);
     }
-    const targetColor = `rgb(${canvasData.data[getColorIndex(x, y)]}, ${canvasData.data[getColorIndex(x, y) + 1]}, ${canvasData.data[getColorIndex(x, y) + 2]})`;
-    // fillColor = fillColor.match(/\d+/g).map(Number); // Parse the color string to [r, g, b]
+    
 
-    if (isSameColor(x, y, targetColor)) {
-        floodFillRecursive(x, y, targetColor);
+    if (isSameColor(x, y)) {
+        floodFillRecursive(x, y);
         ctx.putImageData(canvasData, 0, 0);
-      }
+    }
 }
 
 function addFormListener() {
