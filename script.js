@@ -1,8 +1,5 @@
-import { FloodFill } from 'q-floodfill';
-
 const canvas = document.querySelector("canvas"),
 toolBtns = document.querySelectorAll(".tool"),
-fillColor = document.querySelector("#fill-color"),
 sizeSlider = document.querySelector("#size-slider"),
 colorBtns = document.querySelectorAll(".colors .option"),
 colorPicker = document.querySelector("#color-picker"),
@@ -16,9 +13,7 @@ isDrawing = false,
 selectedTool = "brush",
 brushWidth = 5,
 selectedColor = "#000",
-selectedColour = "#00FF00",
-maskInfo = null,
-fillspeed = 'slow';
+selectedColour = "#00FF00";
 
 const setCanvasBackground = () => {
     // setting whole canvas background to white, so the downloaded img background will be white
@@ -128,19 +123,19 @@ function fillColour(x, y, canvas, ctx, fillColor) {
         return (y * width + x) * 4;
     }
     function localColor(index) {
-        const index = getColorIndex(x, y);
-        const r = canvasData.data[index];
-        const g = canvasData.data[index + 1];
-        const b = canvasData.data[index + 2];
+        const i = getColorIndex(x, y);
+        const r = canvasData.data[i];
+        const g = canvasData.data[i + 1];
+        const b = canvasData.data[i + 2];
         console.log("localColor", `rgb(${r},${g},${b})`);
         return `rgb(${r},${g},${b})`;
     }
     function fillColorAt(x, y) {
         console.log("fillcolor", fillColor);
-        const index = getColorIndex(x, y);
-        canvasData.data[index] = fillColor[0];
-        canvasData.data[index + 1] = fillColor[1];
-        canvasData.data[index + 2] = fillColor[2];
+        const i = getColorIndex(x, y);
+        canvasData.data[i] = fillColor[0];
+        canvasData.data[i + 1] = fillColor[1];
+        canvasData.data[i + 2] = fillColor[2];
         // canvasData.data[index + 3] = 255; // Set the alpha channel to fully opaque
     }
     function hexToRgb(hex) {
