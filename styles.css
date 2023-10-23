@@ -1,5 +1,12 @@
 /* Import Google font - Poppins */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+
+:root {
+  --muscle-color: #972626;
+  --fat-color: #c9801a;
+  --bone-color: #d9bfbf;
+}
+
 *{
   margin: 0;
   padding: 0;
@@ -143,4 +150,44 @@ section{
 .drawing-board canvas{
   width: 100%;
   height: 100%;
+}
+
+#layers {
+  list-style: none;
+}
+
+#muscle {
+  background-color: var(--muscle-color);
+  padding-left: 10px;
+  color: white;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-radius: 20px;
+  border: 1px;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+#fat {
+  background-color: var(--fat-color);
+  padding-left: 10px;
+  color: white;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-radius: 20px;
+  border: 1px;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+#bone {
+  background-color: var(--bone-color);
+  padding-left: 10px;
+  color: white;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-radius: 20px;
+  border: 1px;
+  align-items: center;
+  margin-bottom: 5px;
 }

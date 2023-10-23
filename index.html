@@ -13,16 +13,23 @@
     <div class="container">
       <section class="tools-board">
         <div class="row">
-          <label class="title">Shapes</label>
+          <label class="title">Layers</label>
           <ul class="options">
             <li class="option tool" id="rectangle">
-                <img src="./icons/icons/rectangle.svg" alt="">
-                <span>Fill Shape</span>
+                <img src="./icons/icons/brush.svg" alt="">
+                <span>Fill Layer</span>
             </li>
             <form id="colorForm">
-                <label style="background-color: #00FF00; color: #000000;"><input type="radio" name="colour" value="#00FF00"></input> Green</label>
-                <label style="background-color: #FF0000;"><input type="radio" name="colour" value="#FF0000" checked></input> Red</label>
-                <label style="background-color: #0000FF;"><input type="radio" name="colour" value="#0000FF"></input> Blue</label>
+              <ul id="layers">
+                <li id="muscle">
+                  <input type="radio" name="colour" value="#972626"> Muscle</input>
+                </li>
+                <li id="fat">
+                  <input type="radio" name="colour" value="#c9801a"> Fat</input>
+                </li>
+                <li id="bone">
+                  <input type="radio" name="colour" value="#d9bfbf"> Bone</input>
+                </li>
             </form>
           </ul>
         </div>
@@ -39,18 +46,6 @@
             </li>
             <li class="option">
               <input type="range" id="size-slider" min="1" max="30" value="5">
-            </li>
-          </ul>
-        </div>
-        <div class="row colors">
-          <label class="title">Colors</label>
-          <ul class="options">
-            <li class="option"></li>
-            <li class="option selected"></li>
-            <li class="option"></li>
-            <li class="option"></li>
-            <li class="option">
-              <input type="color" id="color-picker" value="#4A98F7">
             </li>
           </ul>
         </div>

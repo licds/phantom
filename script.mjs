@@ -1,8 +1,6 @@
 const canvas = document.querySelector("canvas"),
 toolBtns = document.querySelectorAll(".tool"),
 sizeSlider = document.querySelector("#size-slider"),
-colorBtns = document.querySelectorAll(".colors .option"),
-colorPicker = document.querySelector("#color-picker"),
 clearCanvas = document.querySelector(".clear-canvas"),
 saveImg = document.querySelector(".save-img"),
 ctx = canvas.getContext("2d");
@@ -13,7 +11,7 @@ isDrawing = false,
 selectedTool = "brush",
 brushWidth = 5,
 selectedColor = "#000",
-selectedColour = "#00FF00";
+selectedColour = "#972626";
 
 const setCanvasBackground = () => {
     // setting whole canvas background to white, so the downloaded img background will be white
@@ -34,11 +32,8 @@ const drawRect = (e) => {
     canvas.addEventListener("click", (evt) => {
         const { x, y } = getEventCoords(evt, canvas.getBoundingClientRect());
         console.log("User clicked the point x", x, "y", y);
-        // fillColour(x, y, canvas, ctx, selectedColour);
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = selectedColour;
         ctx.fillFlood(x, y, 0);
-        // ctx.putImageData(imgData, 0, 0)
     });
 }
 
@@ -69,6 +64,7 @@ const drawing = (e) => {
     }
 }
 
+// Select different tools
 toolBtns.forEach(btn => {
     btn.addEventListener("click", () => { // adding click event to all tool option
         // removing active class from the previous option and adding on current clicked option
@@ -78,29 +74,16 @@ toolBtns.forEach(btn => {
     });
 });
 
+// Change brush size
 sizeSlider.addEventListener("change", () => brushWidth = sizeSlider.value); // passing slider value as brushSize
 
-colorBtns.forEach(btn => {
-    btn.addEventListener("click", () => { // adding click event to all color button
-        // removing selected class from the previous option and adding on current clicked option
-        document.querySelector(".options .selected").classList.remove("selected");
-        btn.classList.add("selected");
-        // passing selected btn background color as selectedColor value
-        selectedColor = window.getComputedStyle(btn).getPropertyValue("background-color");
-    });
-});
-
-colorPicker.addEventListener("change", () => {
-    // passing picked color value from color picker to last color btn background
-    colorPicker.parentElement.style.background = colorPicker.value;
-    colorPicker.parentElement.click();
-});
-
+// Clear Canvas
 clearCanvas.addEventListener("click", () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // clearing whole canvas
     setCanvasBackground();
 });
 
+// Save Image
 saveImg.addEventListener("click", () => {
     const link = document.createElement("a"); // creating <a> element
     link.download = `${Date.now()}.jpg`; // passing current date as link download value
@@ -112,68 +95,20 @@ canvas.addEventListener("mousedown", startDraw);
 canvas.addEventListener("mousemove", drawing);
 canvas.addEventListener("mouseup", () => isDrawing = false);
 
-function fillColour(x, y, canvas, ctx, fillColor) {
-    const width = canvas.width;
-    const height = canvas.height;
-    const canvasData = ctx.getImageData(0, 0, width, height);
-    const originalColor = localColor(x, y);
-    fillColor = hexToRgb(fillColor)
-
-    function getColorIndex(x, y) {
-        return (y * width + x) * 4;
-    }
-    function localColor(index) {
-        const i = getColorIndex(x, y);
-        const r = canvasData.data[i];
-        const g = canvasData.data[i + 1];
-        const b = canvasData.data[i + 2];
-        console.log("localColor", `rgb(${r},${g},${b})`);
-        return `rgb(${r},${g},${b})`;
-    }
-    function fillColorAt(x, y) {
-        console.log("fillcolor", fillColor);
-        const i = getColorIndex(x, y);
-        canvasData.data[i] = fillColor[0];
-        canvasData.data[i + 1] = fillColor[1];
-        canvasData.data[i + 2] = fillColor[2];
-        // canvasData.data[index + 3] = 255; // Set the alpha channel to fully opaque
-    }
-    function hexToRgb(hex) {
-        hex = hex.replace(/^#/, '');
-        const bigint = parseInt(hex, 16);
-        const r = (bigint >> 16) & 255;
-        const g = (bigint >> 8) & 255;
-        const b = bigint & 255;
-        return { r, g, b };
-    }
-    function floodFillRecursive(x, y) {
-        if (x < 0 || x >= width || y < 0 || y >= height) {
-            console.log("x", x, "y", y);
-            return;
-        }
-        if (localColor(x, y) !== originalColor) {
-            console.log("localColor != originalColor", localColor(x, y));
-            return;
-        }
-    
-        fillColorAt(x, y);
-    
-        floodFillRecursive(x + 1, y);
-        floodFillRecursive(x - 1, y);
-        floodFillRecursive(x, y + 1);
-        floodFillRecursive(x, y - 1);
-    }
-    
-
-    if (localColor(x, y) !== fillColor) {
-        floodFillRecursive(x, y);
-        ctx.putImageData(canvasData, 0, 0);
-    }
-}
-
 function addFormListener() {
     document.getElementById("colorForm").addEventListener("change", (evt) => {
-      selectedColour = evt.target.value;
+        selectedColour = evt.target.value;
+
+        // Remove "active" class from the currently active option
+        const activeOption = document.querySelector(".options .active");
+        if (activeOption) {
+            activeOption.classList.remove("active");
+        }
+
+        // Add "active" class to the rectangle tool and set selectedTool to "rectangle"
+        const btn = document.getElementById("rectangle");
+        btn.classList.add("active");
+        selectedTool = btn.id;
     });
 }
 
@@ -187,4 +122,4 @@ function getEventCoords(evt, nodeRect) {
       y = evt.clientY;
     }
     return { x: Math.round(x - nodeRect.x), y: Math.round(y - nodeRect.y) };
-  }
+}
