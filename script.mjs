@@ -30,7 +30,6 @@ window.addEventListener("load", () => {
 });
 
 const drawRect = (e) => {
-<<<<<<< HEAD
     if (selectedTool === "rectangle") {
         console.log(selectedTool)
         addFormListener();
@@ -43,18 +42,6 @@ const drawRect = (e) => {
     } else {
         return
     }
-=======
-    addFormListener();
-    canvas.addEventListener("click", (evt) => {
-        const { x, y } = getEventCoords(evt, canvas.getBoundingClientRect());
-        console.log("User clicked the point x", x, "y", y);
-        // fillColour(x, y, canvas, ctx, selectedColour);
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const floodFill = new FloodFill(imgData);
-        floodFill.fill(selectedColour, x, y, 0);
-        ctx.putImageData(floodFill.imageData, 0, 0)
-    });
->>>>>>> parent of ddf35ed (Work!)
 }
 
 const startDraw = (e) => {
