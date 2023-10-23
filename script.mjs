@@ -30,18 +30,13 @@ window.addEventListener("load", () => {
 });
 
 const drawRect = (e) => {
-    if (selectedTool === "rectangle") {
-        console.log(selectedTool)
-        addFormListener();
-        canvas.addEventListener("click", (evt) => {
-            const { x, y } = getEventCoords(evt, canvas.getBoundingClientRect());
-            console.log("User clicked the point x", x, "y", y);
-            ctx.fillStyle = selectedColour;
-            ctx.fillFlood(x, y, 0);
-        });
-    } else {
-        return
-    }
+    addFormListener();
+    canvas.addEventListener("click", (evt) => {
+        const { x, y } = getEventCoords(evt, canvas.getBoundingClientRect());
+        console.log("User clicked the point x", x, "y", y);
+        ctx.fillStyle = selectedColour;
+        ctx.fillFlood(x, y, 0);
+    });
 }
 
 const startDraw = (e) => {
@@ -60,21 +55,14 @@ const drawing = (e) => {
     if(!isDrawing) return; // if isDrawing is false return from here
     ctx.putImageData(snapshot, 0, 0); // adding copied canvas data on to this canvas
 
-    if (selectedTool === "rectangle") {
-        addFormListener();
-        canvas.addEventListener("click", (evt) => {
-            const { x, y } = getEventCoords(evt, canvas.getBoundingClientRect());
-            console.log("User clicked the point x", x, "y", y);
-            ctx.fillStyle = selectedColour;
-            ctx.fillFlood(x, y, 0);
-        });
-    } else if(selectedTool === "brush" || selectedTool === "eraser") {
+    if(selectedTool === "brush" || selectedTool === "eraser") {
         // if selected tool is eraser then set strokeStyle to white 
         // to paint white color on to the existing canvas content else set the stroke color to selected color
         ctx.strokeStyle = selectedTool === "eraser" ? "#fff" : selectedColor;
         ctx.lineTo(e.offsetX, e.offsetY); // creating line according to the mouse pointer
-        ctx.strokeStyle = selectedColor;
         ctx.stroke(); // drawing/filling line with color
+    } else if(selectedTool === "rectangle"){
+        drawRect(e);
     }
 }
 
@@ -82,11 +70,9 @@ const drawing = (e) => {
 toolBtns.forEach(btn => {
     btn.addEventListener("click", () => { // adding click event to all tool option
         // removing active class from the previous option and adding on current clicked option
-        console.log(document.querySelector(".options .active"))
         document.querySelector(".options .active").classList.remove("active");
         btn.classList.add("active");
         selectedTool = btn.id;
-        console.log(selectedTool);
     });
 });
 
