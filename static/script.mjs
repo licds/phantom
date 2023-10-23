@@ -108,8 +108,39 @@ clearCanvas.addEventListener("click", () => {
 saveImg.addEventListener("click", () => {
     const link = document.createElement("a"); // creating <a> element
     link.download = `${Date.now()}.jpg`; // passing current date as link download value
-    link.href = canvas.toDataURL(); // passing canvasData as link href value
+    const canvasData = canvas.toDataURL();
+    link.href = canvasData; // passing canvasData as link href value
     link.click(); // clicking link to download image
+
+    // Send the image data to the backend
+    fetch('/process_image', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ imageData: canvasData })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Server response: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Assuming the backend sends the processed image as a base64 encoded string
+        const processedImageData = data.processedImage;
+    
+        // Trigger download
+        const link = document.createElement("a");
+        link.href = processedImageData;
+        link.download = `${Date.now()}.jpg`; // or .jpg or any other format depending on the data you get back
+        document.body.appendChild(link); // temporarily add link to document
+        link.click();
+        document.body.removeChild(link); // remove the temporary link
+    })
+    .catch(error => {
+        console.error('Error receiving the processed image from the server:', error.message);
+    });
 });
 
 canvas.addEventListener("mousedown", startDraw);
@@ -117,7 +148,6 @@ canvas.addEventListener("mousemove", drawing);
 canvas.addEventListener("mouseup", () => isDrawing = false);
 canvas.addEventListener("mouseout", () => isDrawing = false);
 canvas.addEventListener("mouseleave", () => isDrawing = false);
-
 
 document.getElementById("colorForm").addEventListener("change", (evt) => {
     selectedColour = evt.target.value;
@@ -129,15 +159,3 @@ document.getElementById("colorForm").addEventListener("change", (evt) => {
     btn.classList.add("active");
     selectedTool = btn.id;
 });
-
-function getEventCoords(evt, nodeRect) {
-    let x, y;
-    if (evt.touches && evt.touches.length > 0) {
-      x = evt.touches[0].clientX;
-      y = evt.touches[0].clientY;
-    } else {
-      x = evt.clientX;
-      y = evt.clientY;
-    }
-    return { x: Math.round(x - nodeRect.x), y: Math.round(y - nodeRect.y) };
-}
