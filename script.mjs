@@ -99,16 +99,16 @@ function addFormListener() {
     document.getElementById("colorForm").addEventListener("change", (evt) => {
         selectedColour = evt.target.value;
 
-        // Remove "active" class from the currently active option
-        const activeOption = document.querySelector(".options .active");
-        if (activeOption) {
-            activeOption.classList.remove("active");
-        }
+        // // Remove "active" class from the currently active option
+        // const activeOption = document.querySelector(".options .active");
+        // if (activeOption) {
+        //     activeOption.classList.remove("active");
+        // }
 
-        // Add "active" class to the rectangle tool and set selectedTool to "rectangle"
-        const btn = document.getElementById("rectangle");
-        btn.classList.add("active");
-        selectedTool = btn.id;
+        // // Add "active" class to the rectangle tool and set selectedTool to "rectangle"
+        // const btn = document.getElementById("rectangle");
+        // btn.classList.add("active");
+        // selectedTool = btn.id;
     });
 }
 
