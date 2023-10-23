@@ -13,6 +13,24 @@ brushWidth = 5,
 selectedColor = "#000",
 selectedColour = "#972626";
 
+const canvasWidthInput = document.getElementById('canvas-width'),
+      canvasHeightInput = document.getElementById('canvas-height'),
+      resizeButton = document.getElementById('resize-canvas');
+
+resizeButton.addEventListener('click', () => {
+    const newWidth = parseInt(canvasWidthInput.value, 10);
+    const newHeight = parseInt(canvasHeightInput.value, 10);
+    
+    // Change the canvas size
+    canvas.width = newWidth;
+    canvas.height = newHeight;
+    canvas.style.width = newWidth + "px";
+    canvas.style.height = newHeight + "px";
+
+    // You might want to reset the canvas background here as well
+    setCanvasBackground();
+});
+
 const setCanvasBackground = () => {
     // setting whole canvas background to white, so the downloaded img background will be white
     ctx.fillStyle = "#fff";
@@ -22,8 +40,10 @@ const setCanvasBackground = () => {
 
 window.addEventListener("load", () => {
     // setting canvas width/height.. offsetwidth/height returns viewable width/height of an element
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    canvas.width = parseInt(500, 10);
+    canvas.height = parseInt(600, 10);
+    canvas.style.width = parseInt(500, 10) + "px";
+    canvas.style.height = parseInt(600, 10) + "px";
     setCanvasBackground();
 });
 
@@ -95,6 +115,9 @@ saveImg.addEventListener("click", () => {
 canvas.addEventListener("mousedown", startDraw);
 canvas.addEventListener("mousemove", drawing);
 canvas.addEventListener("mouseup", () => isDrawing = false);
+canvas.addEventListener("mouseout", () => isDrawing = false);
+canvas.addEventListener("mouseleave", () => isDrawing = false);
+
 
 document.getElementById("colorForm").addEventListener("change", (evt) => {
     selectedColour = evt.target.value;
