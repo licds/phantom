@@ -1,5 +1,3 @@
-import FloodFill from "./node_modules/q-floodfill/src/index.ts";
-
 const canvas = document.querySelector("canvas"),
 toolBtns = document.querySelectorAll(".tool"),
 sizeSlider = document.querySelector("#size-slider"),
