@@ -28,13 +28,13 @@ window.addEventListener("load", () => {
 });
 
 const drawRect = (e) => {
-    addFormListener();
-    canvas.addEventListener("click", (evt) => {
-        const { x, y } = getEventCoords(evt, canvas.getBoundingClientRect());
+    if (e.type === "mousemove") {
+        x = e.offsetX;
+        y = e.offsetY;
         console.log("User clicked the point x", x, "y", y);
         ctx.fillStyle = selectedColour;
         ctx.fillFlood(x, y, 0);
-    });
+    } 
 }
 
 const startDraw = (e) => {
@@ -52,14 +52,15 @@ const startDraw = (e) => {
 const drawing = (e) => {
     if(!isDrawing) return; // if isDrawing is false return from here
     ctx.putImageData(snapshot, 0, 0); // adding copied canvas data on to this canvas
-
+    console.log(e.type)
     if(selectedTool === "brush" || selectedTool === "eraser") {
         // if selected tool is eraser then set strokeStyle to white 
         // to paint white color on to the existing canvas content else set the stroke color to selected color
         ctx.strokeStyle = selectedTool === "eraser" ? "#fff" : selectedColor;
         ctx.lineTo(e.offsetX, e.offsetY); // creating line according to the mouse pointer
         ctx.stroke(); // drawing/filling line with color
-    } else if(selectedTool === "rectangle"){
+    } else if (selectedTool === "rectangle" && e.type === "mousemove") {
+        console.log(e.type)
         drawRect(e);
     }
 }
@@ -95,22 +96,16 @@ canvas.addEventListener("mousedown", startDraw);
 canvas.addEventListener("mousemove", drawing);
 canvas.addEventListener("mouseup", () => isDrawing = false);
 
-function addFormListener() {
-    document.getElementById("colorForm").addEventListener("change", (evt) => {
-        selectedColour = evt.target.value;
-
-        // Remove "active" class from the currently active option
-        const activeOption = document.querySelector(".options .active");
-        if (activeOption) {
-            activeOption.classList.remove("active");
-        }
-
-        // Add "active" class to the rectangle tool and set selectedTool to "rectangle"
-        const btn = document.getElementById("rectangle");
-        btn.classList.add("active");
-        selectedTool = btn.id;
-    });
-}
+document.getElementById("colorForm").addEventListener("change", (evt) => {
+    selectedColour = evt.target.value;
+    const activeOption = document.querySelector(".options .active");
+    if (activeOption) {
+        activeOption.classList.remove("active");
+    }
+    const btn = document.getElementById("rectangle");
+    btn.classList.add("active");
+    selectedTool = btn.id;
+});
 
 function getEventCoords(evt, nodeRect) {
     let x, y;
