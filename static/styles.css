@@ -135,6 +135,17 @@ section{
   align-items: center;
   margin-bottom: 5px;
 }
+#blank {
+  border-color: black;
+  padding-left: 10px;
+  color: black;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  border-radius: 20px;
+  border: 1px;
+  align-items: center;
+  margin-bottom: 5px;
+}
 #resize-canvas{
   color: #6C757D;
   border: 1px solid #6C757D;
