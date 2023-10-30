@@ -54,11 +54,12 @@ def apply_gan_and_create_masked_image(generator, image, mask, bbox):
     Tensor = torch.FloatTensor
     z = Variable(Tensor(np.random.normal(0, 1, (256, 100))))
     gen_imgs = generator(z) 
-    img = gen_imgs[0][1] #.cuda()
+    print(gen_imgs.shape)
+    img = gen_imgs[0] #.cuda()
     transform = transforms.Compose([transforms.Resize((h, w))])
     img = transform(img)
     generated = (im_converterX(img)*255).astype(np.uint8)
-    masked = cv2.bitwise_and(generated, generated, mask=mask[max(y-10, 0):min(y+h+10, image.shape[0]), max(x-10, 0):min(x+w+10, image.shape[1])])
+    masked = cv2.bitwise_and(generated, generated, mask=mask[max(y, 0):min(y+h, image.shape[0]), max(x, 0):min(x+w, image.shape[1])])
     return masked
 
 @app.route('/generate_image', methods=['POST'])
@@ -66,7 +67,8 @@ def generate_image():
     data = request.json
     img_data = data['imageData'].split(',')[1]
     file_bytes = io.BytesIO(base64.b64decode(img_data))
-    image = cv2.imdecode(np.fromstring(file_bytes.getvalue(), np.uint8), cv2.IMREAD_UNCHANGED)
+    # image = cv2.imdecode(np.fromstring(file_bytes.getvalue(), np.uint8), cv2.IMREAD_UNCHANGED)
+    image = cv2.imdecode(np.frombuffer(file_bytes.getvalue(), np.uint8), cv2.IMREAD_COLOR)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     fat_thresholds = [80, 150]
@@ -80,6 +82,7 @@ def generate_image():
     }
 
     canvas = np.zeros_like(image)
+    print(canvas.shape)
     generator = torch.load('static/models/all_phantom_GANgenerator_50epochs.h5', map_location=torch.device('cpu'))
 
     for component, (threshold_low, threshold_high) in components.items():
@@ -88,11 +91,17 @@ def generate_image():
         # img_base64 = base64.b64encode(img_encoded).decode('utf-8')
         # return jsonify({"processedImage": f"data:image/jpeg;base64,{img_base64}"})
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        print("mask complete", component)
         for contour in contours:
             bbox = cv2.boundingRect(contour)
+            print("Bounding box complete", bbox)
             masked_generated = apply_gan_and_create_masked_image(generator, image, mask, bbox)
+            _, img_encoded = cv2.imencode('.jpg', masked_generated)
+            img_base64 = base64.b64encode(img_encoded).decode('utf-8')
+            return jsonify({"processedImage": f"data:image/jpeg;base64,{img_base64}"})
+            print("generated image complete")
             x, y, w, h = bbox
-            canvas[max(y-10, 0):min(y+h+10, image.shape[0]), max(x-10, 0):min(x+w+10, image.shape[1])] = masked_generated
+            canvas[max(y, 0):min(y+h, image.shape[0]), max(x, 0):min(x+w, image.shape[1])] = masked_generated
 
             _, img_encoded = cv2.imencode('.jpg', canvas)
             img_base64 = base64.b64encode(img_encoded).decode('utf-8')
