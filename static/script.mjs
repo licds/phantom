@@ -113,7 +113,7 @@ saveImg.addEventListener("click", () => {
     link.click(); // clicking link to download image
 
     // Send the image data to the backend
-    fetch('/process_image', {
+    fetch('/generate_image', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
