@@ -143,6 +143,57 @@ saveImg.addEventListener("click", () => {
     });
 });
 
+// Upload image
+document.getElementById('uploadButton').addEventListener('click', () => {
+    // Trigger file input click to open file dialog
+    document.getElementById('uploadImg').click();
+});
+
+document.getElementById('uploadImg').addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+        return;
+    }
+
+    // Convert the image to a Data URL
+    const reader = new FileReader();
+    reader.onloadend = () => {
+        // This is the data we will send to the server
+        const imageData = reader.result;
+
+        // Send the image data to the backend
+        fetch('/generate_image', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ imageData: imageData })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server response: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Assuming the backend sends the processed image as a base64 encoded string
+            const processedImageData = data.processedImage;
+        
+            // Trigger download of the processed image
+            const link = document.createElement("a");
+            link.href = processedImageData;
+            link.download = `${Date.now()}.jpg`; // or .png, .jpeg, etc.
+            document.body.appendChild(link); // temporarily add link to document
+            link.click();
+            document.body.removeChild(link); // remove the temporary link
+        })
+        .catch(error => {
+            console.error('Error receiving the processed image from the server:', error.message);
+        });
+    };
+    reader.readAsDataURL(file);
+});
+
 canvas.addEventListener("mousedown", startDraw);
 canvas.addEventListener("mousemove", drawing);
 canvas.addEventListener("mouseup", () => isDrawing = false);

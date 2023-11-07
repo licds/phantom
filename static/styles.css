@@ -90,6 +90,10 @@ section{
   background: #4A98F7;
   border: 1px solid #4A98F7;
 }
+.buttons #uploadButton{
+  background: #4A98F7;
+  border: 1px solid #4A98F7;
+}
 .drawing-board{
   flex: 1;
   padding: 10px;
