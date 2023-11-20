@@ -86,8 +86,14 @@ def generate_image():
         'bone': bone_thresholds
     }
 
-    folder_path = 'static/muscle_images/2207_clinical_generated_2048'
-    images = [img for img in os.listdir(folder_path) if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    musscle_folder_path = 'static/muscle_images/2207_clinical_generated_2048'
+    musscle_images = [img for img in os.listdir(musscle_folder_path) if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    bone_folder_path = 'static/muscle_images/2207_clinical_generated_2048'
+    bone_images = [img for img in os.listdir(bone_folder_path) if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    fat_folder_path = 'static/muscle_images/2207_clinical_generated_2048'
+    fat_images = [img for img in os.listdir(fat_folder_path) if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    tissue_folder_path = 'static/muscle_images/2207_clinical_generated_2048'
+    tissue_images = [img for img in os.listdir(tissue_folder_path) if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
     transformed = np.zeros((gray.shape[0], gray.shape[1], 3), dtype=np.uint8)
     for component, (threshold_low, threshold_high) in components.items():
         mask = segment_image(gray, threshold_low, threshold_high)
@@ -137,30 +143,6 @@ def generate_image():
     gradient_fill = np.where(mask == 255, blurred_random_gradient, 0)
     result = np.where(mask == 255, gradient_fill, transformed)
     result = cv2.cvtColor(result, cv2.COLOR_GRAY2BGR)
-    # blurred_result = cv2.GaussianBlur(result, (5, 5), 0)
-
-    # canvas = np.zeros_like(image)
-    # print(canvas.shape)
-    # generator = torch.load('static/models/all_phantom_GANgenerator_50epochs.h5', map_location=torch.device('cpu'))
-
-    # for component, (threshold_low, threshold_high) in components.items():
-    #     mask = segment_image(gray, threshold_low, threshold_high)
-    #     # _, img_encoded = cv2.imencode('.jpg', mask)
-    #     # img_base64 = base64.b64encode(img_encoded).decode('utf-8')
-    #     # return jsonify({"processedImage": f"data:image/jpeg;base64,{img_base64}"})
-    #     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    #     print("mask complete", component)
-    #     for contour in contours:
-    #         bbox = cv2.boundingRect(contour)
-    #         print("Bounding box complete", bbox)
-    #         masked_generated = apply_gan_and_create_masked_image(generator, image, mask, bbox)
-    #         _, img_encoded = cv2.imencode('.jpg', masked_generated)
-    #         x, y, w, h = bbox
-    #         canvas[max(y, 0):min(y+h, image.shape[0]), max(x, 0):min(x+w, image.shape[1])] = masked_generated
-
-    #         _, img_encoded = cv2.imencode('.jpg', canvas)
-    #         img_base64 = base64.b64encode(img_encoded).decode('utf-8')
-    #         return jsonify({"processedImage": f"data:image/jpeg;base64,{img_base64}"})
 
     _, img_encoded = cv2.imencode('.jpg', result)
     img_base64 = base64.b64encode(img_encoded).decode('utf-8')
