@@ -67,11 +67,14 @@
           <button class="clear-canvas">Clear Canvas</button>
           <button class="save-img">Save As Image</button>
           <input type="file" id="uploadImg" accept="image/png, image/jpeg, image/jpg" style="display: none;" />
-          <button id="uploadButton">Upload Image</button>
+          <button class="uploadButton">Upload Image</button>
         </div>
       </section>
       <section class="drawing-board">
-        <canvas></canvas>
+        <div class="canvas-bkg">
+          <canvas id="canvas"></canvas>
+          <canvas id="background"></canvas>
+        </div>
       </section>
     </div>
     <script src="./static/script.mjs"></script>

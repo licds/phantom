@@ -90,7 +90,7 @@ section{
   background: #4A98F7;
   border: 1px solid #4A98F7;
 }
-.buttons #uploadButton{
+.buttons .uploadButton{
   background: #4A98F7;
   border: 1px solid #4A98F7;
 }
@@ -99,13 +99,38 @@ section{
   padding: 10px;
   background-color: #4A98F7;
 }
-.drawing-board .canvas{
-  margin: 10px;
+
+.canvas-bkg {
+  display: grid;
+  grid-template: 1fr / 1fr;
+  place-items: center;
 }
+
+.canvas-bkg > * {
+  grid-column: 1 / 1;
+  grid-row: 1 / 1;
+}
+.canvas-bkg #background {
+  z-index: 1;
+}
+.canvas-bkg #canvas {
+  z-index: 2;
+  opacity: 0.5;
+}
+
+/* #canvas{
+  opacity: 0.5;
+}
+
+#background {
+  margin-top: -100%;
+  margin-left: -100%;
+  /* margin-bottom: 25px; */
 
 #layers {
   list-style: none;
 }
+
 #muscle {
   background-color: var(--muscle-color);
   padding-left: 10px;

@@ -13,88 +13,44 @@ import random
 
 app = Flask(__name__)
 
-# class DCGAN_Generator(nn.Module):
-#     def __init__(self):
-#         super(DCGAN_Generator, self).__init__()
-#         self.init_size = 256 // 4
-#         self.l1 = nn.Sequential(nn.Linear(100, 128 * self.init_size ** 2)) #latent dim = 100
-#         self.conv_blocks = nn.Sequential(
-#             nn.BatchNorm2d(128),
-#             nn.Upsample(scale_factor=2),
-#             nn.Conv2d(128, 128, 3, stride=1, padding=1),
-#             nn.BatchNorm2d(128, 0.8),
-#             nn.LeakyReLU(0.2, inplace=True),
-#             nn.Upsample(scale_factor=2),
-#             nn.Conv2d(128, 64, 3, stride=1, padding=1),
-#             nn.BatchNorm2d(64, 0.8),
-#             nn.LeakyReLU(0.2, inplace=True),
-#             nn.Conv2d(64, 1, 3, stride=1, padding=1),
-#             nn.Tanh(),
-#         )
-#     def forward(self, z):
-#         out = self.l1(z)
-#         out = out.view(out.shape[0], 128, self.init_size, self.init_size)
-#         img = self.conv_blocks(out)
-#         return img
-
 @app.route('/')
 def index():
     return render_template('index.html')
 
-# def im_converterX(tensor):
-#     image = tensor.cpu().clone().detach().numpy()
-#     image = image.transpose(1,2,0)
-#     image = image * np.array((1, 1, 1))
-#     image = image.clip(0, 1)
-#     return image
-
 def segment_image(image, lower, upper):
     mask = cv2.inRange(image, lower, upper)
     return mask
-
-# def apply_gan_and_create_masked_image(generator, image, mask, bbox):
-#     x, y, w, h = bbox
-    # Tensor = torch.FloatTensor
-    # z = Variable(Tensor(np.random.normal(0, 1, (256, 100))))
-    # gen_imgs = generator(z) 
-    # print(gen_imgs.shape)
-    # img = gen_imgs[0] #.cuda()
-    # transform = transforms.Compose([transforms.Resize((h, w))])
-    # img = transform(img)
-    # generated = (im_converterX(img)*255).astype(np.uint8)
-
-    # img = img.resize((256, 256)).convert('L')
-    # masked = cv2.bitwise_and(generated, generated, mask=mask[max(y, 0):min(y+h, image.shape[0]), max(x, 0):min(x+w, image.shape[1])])
-    # return masked
 
 @app.route('/generate_image', methods=['POST'])
 def generate_image():
     data = request.json
     img_data = data['imageData'].split(',')[1]
     file_bytes = io.BytesIO(base64.b64decode(img_data))
-    # image = cv2.imdecode(np.fromstring(file_bytes.getvalue(), np.uint8), cv2.IMREAD_UNCHANGED)
     image = cv2.imdecode(np.frombuffer(file_bytes.getvalue(), np.uint8), cv2.IMREAD_COLOR)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     fat_thresholds = [80, 150]
     muscle_thresholds = [1, 79]
     bone_thresholds = [151, 254]
+    tissue_thresholds = [0, 0]
 
     components = {
         'fat': fat_thresholds,
         'muscle': muscle_thresholds,
-        'bone': bone_thresholds
+        'bone': bone_thresholds,
+        'tissue': tissue_thresholds
     }
 
-    musscle_folder_path = 'static/muscle_images/2207_clinical_generated_2048'
-    musscle_images = [img for img in os.listdir(musscle_folder_path) if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
-    bone_folder_path = 'static/muscle_images/2207_clinical_generated_2048'
+    muscle_folder_path = 'static/muscle_images/muscle_images'
+    muscle_images = [img for img in os.listdir(muscle_folder_path) if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    bone_folder_path = 'static/muscle_images/bone_images'
     bone_images = [img for img in os.listdir(bone_folder_path) if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
-    fat_folder_path = 'static/muscle_images/2207_clinical_generated_2048'
+    fat_folder_path = 'static/muscle_images/fat_images'
     fat_images = [img for img in os.listdir(fat_folder_path) if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
-    tissue_folder_path = 'static/muscle_images/2207_clinical_generated_2048'
+    tissue_folder_path = 'static/muscle_images/tissue_images'
     tissue_images = [img for img in os.listdir(tissue_folder_path) if img.lower().endswith(('.png', '.jpg', '.jpeg'))]
     transformed = np.zeros((gray.shape[0], gray.shape[1], 3), dtype=np.uint8)
+    tissue_mask = np.zeros((gray.shape[0], gray.shape[1], 3), dtype=np.uint8)
     for component, (threshold_low, threshold_high) in components.items():
         mask = segment_image(gray, threshold_low, threshold_high)
         _, binary = cv2.threshold(mask, 127, 255, cv2.THRESH_BINARY)
@@ -115,7 +71,7 @@ def generate_image():
             mask = np.zeros((h, w), dtype='uint8')
             shifted_contour = contour - np.array([x, y])
             cv2.drawContours(mask, [shifted_contour], -1, (255), thickness=cv2.FILLED)
-            if component == "bone":
+            if component == "boaxne":
                 bone_canvas = np.zeros((h, w), dtype=np.uint8)
                 perlin_noise = generate_perlin_noise_2d((256, 256), (16, 16))
                 perlin_noise = cv2.normalize(perlin_noise, None, 0, 200, cv2.NORM_MINMAX)
@@ -127,24 +83,52 @@ def generate_image():
                 combined_image = cv2.addWeighted(rippled_effect, 0.5, bone_canvas, 0.5, 0)
                 combined_image = cv2.cvtColor(combined_image, cv2.COLOR_GRAY2BGR)
                 canvas[y:y+h, x:x+w][mask == 255] = combined_image[mask == 255]
+            elif component == "bone":
+                bone_image = cv2.imread(os.path.join(bone_folder_path, random.choice(bone_images)))
+                bone_image = cv2.resize(bone_image, (w,h))
+                canvas[y:y+h, x:x+w][mask == 255] = bone_image[mask == 255]
+            elif component == "fat":
+                fat_image = cv2.imread(os.path.join(fat_folder_path, random.choice(fat_images)))
+                fat_image = cv2.resize(fat_image, (w,h))
+                canvas[y:y+h, x:x+w][mask == 255] = fat_image[mask == 255]
+            elif component == "muscle":
+                muscle_image = cv2.imread(os.path.join(muscle_folder_path, random.choice(muscle_images)))
+                muscle_image = cv2.resize(muscle_image, (w,h))
+                canvas[y:y+h, x:x+w][mask == 255] = muscle_image[mask == 255]
             else:
-                random_image = cv2.imread(os.path.join(folder_path, random.choice(images)))
-                random_image = cv2.resize(random_image, (w,h))
-                canvas[y:y+h, x:x+w][mask == 255] = random_image[mask == 255]
+                tissue_image = cv2.imread(os.path.join(tissue_folder_path, random.choice(tissue_images)))
+                tissue_image = cv2.resize(tissue_image, (w,h))
+                # blurred_mask = cv2.GaussianBlur(mask, (21, 21), 0)
+                canvas[y:y+h, x:x+w][mask == 255] = tissue_image[mask == 255]
+                tissue_mask[y:y+h, x:x+w][mask == 255] = 255
         transformed += canvas
     if len(transformed.shape) == 3:
         transformed = cv2.cvtColor(transformed, cv2.COLOR_BGR2GRAY)
-    _, mask = cv2.threshold(transformed, 1, 255, cv2.THRESH_BINARY_INV)
-    dist_transform = cv2.distanceTransform(mask, cv2.DIST_L2, 3)
-    dist_transform_normalized = cv2.normalize(dist_transform, None, 0, 1.0, cv2.NORM_MINMAX)
-    gradient_fill = np.uint8(170 * (1 - dist_transform_normalized))
-    gradient_fill_inverted = cv2.subtract(255, gradient_fill)
-    blurred_random_gradient = cv2.GaussianBlur(gradient_fill_inverted, (21, 21), 0)
-    gradient_fill = np.where(mask == 255, blurred_random_gradient, 0)
-    result = np.where(mask == 255, gradient_fill, transformed)
-    result = cv2.cvtColor(result, cv2.COLOR_GRAY2BGR)
+    # _, mask = cv2.threshold(transformed, 1, 255, cv2.THRESH_BINARY_INV)
+    # dist_transform = cv2.distanceTransform(mask, cv2.DIST_L2, 3)
+    # dist_transform_normalized = cv2.normalize(dist_transform, None, 0, 1.0, cv2.NORM_MINMAX)
+    # gradient_fill = np.uint8(170 * (1 - dist_transform_normalized))
+    # gradient_fill_inverted = cv2.subtract(255, gradient_fill)
+    # blurred_random_gradient = cv2.GaussianBlur(gradient_fill_inverted, (21, 21), 0)
+    # gradient_fill = np.where(mask == 255, blurred_random_gradient, 0)
+    # result = np.where(mask == 255, 200, transformed)
+    # result = cv2.cvtColor(result, cv2.COLOR_GRAY2BGR)
+    if len(tissue_mask.shape) == 3:
+        tissue_mask = cv2.cvtColor(tissue_mask, cv2.COLOR_BGR2GRAY)
+    dist_transform = cv2.distanceTransform(tissue_mask, cv2.DIST_L2, 5)
+    cv2.normalize(dist_transform, dist_transform, 0, 1.0, cv2.NORM_MINMAX)
+    dist_transform = (dist_transform * 255).astype(np.uint8)
+    blurred_mask = cv2.GaussianBlur(dist_transform, (15, 15), 0)
+    blurred_mask[blurred_mask>0] = 255
+    scaling_factor = 1.25
+    blur = cv2.blur(transformed,(5,5),0)
+    blur = cv2.multiply(blur, np.array([scaling_factor]))
+    blur = np.clip(blur, 0, 255).astype(np.uint8)
+    out = transformed.copy()
+    out[blurred_mask>0] = blur[blurred_mask>0]
+    # feathered = (transformed * blurred_mask / 255).astype(np.uint8)
 
-    _, img_encoded = cv2.imencode('.jpg', result)
+    _, img_encoded = cv2.imencode('.jpg', out)
     img_base64 = base64.b64encode(img_encoded).decode('utf-8')
     return jsonify({"processedImage": f"data:image/jpeg;base64,{img_base64}"})
 
